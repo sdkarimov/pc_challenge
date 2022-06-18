@@ -17,8 +17,8 @@ func NewBackOffBase2Exp(iterationCount int) *BackOffBase2Exp {
 
 func (b *BackOffBase2Exp) BackOffIteration() (int, bool) {
 	if b.CurrentCount <= b.StopCount {
-		fmt.Println("Iteration = ", b.CurrentCount)
-		fmt.Println("Sleep sec = ", b.TimeOut)
+		fmt.Println("Back off iteration = ", b.CurrentCount)
+		fmt.Println("Back off sleep sec = ", b.TimeOut)
 
 		currentTimeout := b.TimeOut
 		time.Sleep(time.Duration(b.TimeOut) * time.Second)

@@ -42,6 +42,7 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 
 	// dedublicate
 	if _, ok := s.processingStorage.Get(cacheKey); ok {
+		fmt.Println("Dedublicate requests")
 		return data, errors.New("Service is processing request with params:  " +
 			from.String() + "; " + to.String() + "; " + data)
 	} else {
@@ -51,7 +52,7 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 	defer s.processingStorage.Delete(cacheKey)
 
 	if v, ok := s.translatorCache.Get(cacheKey); ok {
-		fmt.Println("FROM CACHE")
+		fmt.Println("Return cached value")
 		return v.(core.CacheVal).Value.(string), nil
 	}
 
@@ -62,10 +63,9 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 	}
 
 	timeOutOk := true
-	sec := 0
-	for timeOutOk && err != nil {
-		sec, timeOutOk = s.timeout.BackOffIteration()
-		fmt.Println("Sec elapsed ", sec)
+	fmt.Println("Back off timeouts")
+	for timeOutOk {
+		_, timeOutOk = s.timeout.BackOffIteration()
 		if result, err = s.translatorClient.Translate(ctx, from, to, data); err == nil {
 			s.setToCache(cacheKey, result)
 			return result, err
