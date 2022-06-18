@@ -1,7 +1,7 @@
 package backoff
 
 type BackOff interface {
-	BackOffIteration() (bool, int)
+	BackOffIteration() (int, bool)
 }
 
 type ServiceBackOff struct {
