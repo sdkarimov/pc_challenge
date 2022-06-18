@@ -14,7 +14,7 @@ type Cache struct {
 	Storage        map[string]interface{}
 }
 
-func NewCache(TTL , GCTimer int) *Cache {
+func NewCache(TTL, GCTimer int) *Cache {
 	c := Cache{
 		TTLSeconds:     TTL,
 		GCTimerSeconds: GCTimer,
@@ -34,6 +34,12 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 func (c *Cache) Set(key string, val interface{}) {
 	c.mux.Lock()
 	c.Storage[key] = val
+	c.mux.Unlock()
+}
+
+func (c *Cache) Delete(key string) {
+	c.mux.Lock()
+	delete(c.Storage, key)
 	c.mux.Unlock()
 }
 

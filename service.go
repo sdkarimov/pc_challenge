@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"time"
@@ -14,9 +15,10 @@ import (
 
 // Service is a Translator user.
 type Service struct {
-	translatorClient TranslatorAPI
-	timeout          backoff.BackOff
-	translatorCache  storage.Storage
+	translatorClient  TranslatorAPI
+	timeout           backoff.BackOff
+	translatorCache   storage.Storage
+	processingStorage storage.Storage
 }
 
 func NewService() *Service {
@@ -26,27 +28,36 @@ func NewService() *Service {
 		0.1,
 	)
 
-	b := backoff.NewBackOffBase2Exp(3)
-
 	return &Service{
-		translatorClient: t,
-		timeout:          b,
-		translatorCache:  storage.NewCache(10, 2),
+		translatorClient:  t,
+		timeout:           backoff.NewBackOffBase2Exp(3),
+		translatorCache:   storage.NewCache(10, 2),
+		processingStorage: storage.NewCache(20, 10),
 	}
 }
 
 func (s *Service) Translate(ctx context.Context, from, to language.Tag, data string) (string, error) {
 
-	fmt.Println("Sleep 0")
 	cacheKey := from.String() + to.String() + data
+
+	// dedublicate
+	if _, ok := s.processingStorage.Get(cacheKey); ok {
+		return data, errors.New("Service is processing request with params:  " +
+			from.String() + "; " + to.String() + "; " + data)
+	} else {
+		s.processingStorage.Set(cacheKey, core.CacheVal{Value: true, CreateDate: time.Now().Unix()})
+	}
+
 	if v, ok := s.translatorCache.Get(cacheKey); ok {
 		fmt.Println("FROM CACHE")
+		s.processingStorage.Delete(cacheKey)
 		return v.(core.CacheVal).Value.(string), nil
 	}
 
 	result, err := s.translatorClient.Translate(ctx, from, to, data)
 	if err == nil {
 		s.setToCache(cacheKey, result)
+		s.processingStorage.Delete(cacheKey)
 		return result, err
 	}
 
@@ -57,10 +68,11 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 		fmt.Println("Sec elapsed ", sec)
 		if result, err = s.translatorClient.Translate(ctx, from, to, data); err == nil {
 			s.setToCache(cacheKey, result)
+			s.processingStorage.Delete(cacheKey)
 			return result, err
 		}
-
 	}
+	s.processingStorage.Delete(cacheKey)
 	return result, err
 }
 
