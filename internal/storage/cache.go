@@ -11,27 +11,27 @@ type Cache struct {
 	TTLSeconds     int
 	GCTimerSeconds int
 	mux            sync.RWMutex
-	Storage        map[string]core.CacheVal
+	Storage        map[string]interface{}
 }
 
-func NewCache(ttl int, gctimer int) *Cache {
+func NewCache(TTL , GCTimer int) *Cache {
 	c := Cache{
-		TTLSeconds:     ttl,
-		GCTimerSeconds: gctimer,
+		TTLSeconds:     TTL,
+		GCTimerSeconds: GCTimer,
 		mux:            sync.RWMutex{},
-		Storage:        make(map[string]core.CacheVal)}
+		Storage:        make(map[string]interface{})}
 	c.RunGC()
 	return &c
 }
 
-func (c *Cache) Get(key string) (core.CacheVal, bool) {
+func (c *Cache) Get(key string) (interface{}, bool) {
 	c.mux.RLock()
 	res, ok := c.Storage[key]
 	c.mux.RUnlock()
 	return res, ok
 }
 
-func (c *Cache) Set(key string, val core.CacheVal) {
+func (c *Cache) Set(key string, val interface{}) {
 	c.mux.Lock()
 	c.Storage[key] = val
 	c.mux.Unlock()
@@ -44,7 +44,7 @@ func (c *Cache) RunGC() {
 			c.mux.Lock()
 			for k, v := range c.Storage {
 				now := time.Now().Unix()
-				if v.CreateDate+int64(c.TTLSeconds) < now {
+				if v.(core.CacheVal).CreateDate+int64(c.TTLSeconds) < now {
 					delete(c.Storage, k)
 				}
 			}

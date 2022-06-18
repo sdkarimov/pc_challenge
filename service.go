@@ -31,7 +31,7 @@ func NewService() *Service {
 	return &Service{
 		translatorClient: t,
 		timeout:          b,
-		translatorCache:  storage.NewCache(5, 2),
+		translatorCache:  storage.NewCache(10, 2),
 	}
 }
 
@@ -41,7 +41,7 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 	cacheKey := from.String() + to.String() + data
 	if v, ok := s.translatorCache.Get(cacheKey); ok {
 		fmt.Println("FROM CACHE")
-		return v.Value.(string), nil
+		return v.(core.CacheVal).Value.(string), nil
 	}
 
 	result, err := s.translatorClient.Translate(ctx, from, to, data)
