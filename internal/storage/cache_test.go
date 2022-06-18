@@ -38,7 +38,7 @@ func TestCacheUsage(t *testing.T) {
 
 }
 
-func TestDelete(t *testing.T) {
+func TestCacheDelete(t *testing.T) {
 	c := NewCache(3, 1)
 	val := core.CacheVal{Value: "testval", CreateDate: time.Now().Unix()}
 	c.Set("key", val)

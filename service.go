@@ -48,16 +48,16 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 		s.processingStorage.Set(cacheKey, core.CacheVal{Value: true, CreateDate: time.Now().Unix()})
 	}
 
+	defer s.processingStorage.Delete(cacheKey)
+
 	if v, ok := s.translatorCache.Get(cacheKey); ok {
 		fmt.Println("FROM CACHE")
-		s.processingStorage.Delete(cacheKey)
 		return v.(core.CacheVal).Value.(string), nil
 	}
 
 	result, err := s.translatorClient.Translate(ctx, from, to, data)
 	if err == nil {
 		s.setToCache(cacheKey, result)
-		s.processingStorage.Delete(cacheKey)
 		return result, err
 	}
 
@@ -68,11 +68,9 @@ func (s *Service) Translate(ctx context.Context, from, to language.Tag, data str
 		fmt.Println("Sec elapsed ", sec)
 		if result, err = s.translatorClient.Translate(ctx, from, to, data); err == nil {
 			s.setToCache(cacheKey, result)
-			s.processingStorage.Delete(cacheKey)
 			return result, err
 		}
 	}
-	s.processingStorage.Delete(cacheKey)
 	return result, err
 }
 
