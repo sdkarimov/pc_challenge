@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 
 func TestNewCache(t *testing.T) {
 	c := NewCache(3, 1)
-	if reflect.TypeOf(c).String() != "*storage.Cache" {
+	if c == nil {
 		t.Fatal("NewCache not return Cache obj")
 	}
 }
@@ -37,6 +36,20 @@ func TestCacheUsage(t *testing.T) {
 		t.Fatal("Fail to get key = ", val2.Value)
 	}
 
+}
+
+func TestDelete(t *testing.T) {
+	c := NewCache(3, 1)
+	val := core.CacheVal{Value: "testval", CreateDate: time.Now().Unix()}
+	c.Set("key", val)
+	if v, ok := c.Get("key"); !ok || v.(core.CacheVal).Value != val.Value {
+		t.Fatal("Fail to get key = ", val.Value)
+	}
+	c.Delete("key")
+	if v, ok := c.Get("key"); ok {
+		assert.Equal(t, v.(core.CacheVal).Value, val.Value)
+		t.Fatal("Failed gc worker")
+	}
 }
 
 func TestCacheGC(t *testing.T) {

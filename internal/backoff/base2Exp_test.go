@@ -12,39 +12,17 @@ func TestBackOffIterationPowerOf3(t *testing.T) {
 	b := NewBackOffBase2Exp(3)
 
 	// TODO: testCases array then iterate it
+	for id, tout := range []int{1, 2, 4, 8} {
+		timeout, ok := b.BackOffIteration()
+		if !ok {
+			t.Fatal(id, " iteration, timeout not OK ")
+		}
+		if timeout != tout {
+			t.Fatal(id, " iteration, timeout expected ", tout, ", got :", timeout)
+		}
+	}
+
 	timeout, ok := b.BackOffIteration()
-	if !ok {
-		t.Fatal("Zero iteration, timeout not OK ")
-	}
-	if timeout != 1 {
-		t.Fatal("Zero iteration, timeout expected 1, got :", timeout)
-	}
-
-	timeout, ok = b.BackOffIteration()
-	if !ok {
-		t.Fatal("First iteration, timeout not OK ")
-	}
-	if timeout != 2 {
-		t.Fatal("First iteration, timeout expected 2, got :", timeout)
-	}
-
-	timeout, ok = b.BackOffIteration()
-	if !ok {
-		t.Fatal("Second iteration, timeout not OK ")
-	}
-	if timeout != 4 {
-		t.Fatal("Second iteration, timeout expected 4, got :", timeout)
-	}
-
-	timeout, ok = b.BackOffIteration()
-	if !ok {
-		t.Fatal("Third iteration, timeout not OK ")
-	}
-	if timeout != 8 {
-		t.Fatal("Third iteration, timeout expected 8, got :", timeout)
-	}
-
-	timeout, ok = b.BackOffIteration()
 	if ok {
 		t.Fatal("Fourth iteration is not expected ")
 	}
